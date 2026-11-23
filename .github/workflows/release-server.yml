@@ -1,0 +1,71 @@
+name: Release MCP server
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Image version, e.g. 0.1.4"
+        required: true
+
+permissions:
+  id-token: write   # OIDC sign-in to Azure, no stored secrets
+  contents: read
+
+env:
+  RG: rg-iea-dev
+  APP: ca-iea-mcp-dev
+  ACR: acrieadev9498
+  IMAGE: iea-mcp
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - run: uv run pytest -q
+      - run: python eval/check_fresh.py
+      - run: python eval/check_thresholds.py
+
+  release:
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Remember the current image (for rollback)
+        id: prev
+        run: |
+          echo "image=$(az containerapp show -n $APP -g $RG --query 'properties.template.containers[0].image' -o tsv)" >> "$GITHUB_OUTPUT"
+
+      - name: Build image in ACR
+        run: az acr build -r $ACR -t $IMAGE:${{ inputs.version }} -f mcp_server/Dockerfile .
+
+      - name: Deploy new revision
+        run: |
+          SUFFIX="v$(echo '${{ inputs.version }}' | tr '.' '-')-${GITHUB_RUN_NUMBER}"
+          az containerapp update -n $APP -g $RG \
+            --image $ACR.azurecr.io/$IMAGE:${{ inputs.version }} \
+            --revision-suffix "$SUFFIX"
+
+      - name: Smoke test /healthz
+        run: |
+          FQDN=$(az containerapp show -n $APP -g $RG --query properties.configuration.ingress.fqdn -o tsv)
+          for i in $(seq 1 20); do
+            if [ "$(curl -s https://$FQDN/healthz)" = "ok" ]; then echo "healthy"; exit 0; fi
+            sleep 15
+          done
+          echo "server did not become healthy"; exit 1
+
+      - name: Roll back on failure
+        if: failure() && steps.prev.outputs.image != ''
+        run: |
+          az containerapp update -n $APP -g $RG --image ${{ steps.prev.outputs.image }} \
+            --revision-suffix "rollback-${GITHUB_RUN_NUMBER}"

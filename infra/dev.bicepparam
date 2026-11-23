@@ -1,0 +1,22 @@
+using './main.bicep'
+
+// Existing dev names. Use with `what-if` to compare code with what is deployed.
+param env = 'dev'
+param location = 'eastus'
+param searchName = 'srch-iea-dev'
+param aiName = 'aif-iea-dev'
+param storageName = 'stieadev5954'
+param acrName = 'acrieadev9498'
+param keyVaultName = 'kv-iea-dev-25551'
+param logName = 'log-iea-dev'
+param appInsightsName = 'appi-iea-dev'
+param containerEnvName = 'cae-iea-dev'
+param containerAppName = 'ca-iea-mcp-dev'
+param staticWebAppName = 'swa-iea-dev'
+param image = 'acrieadev9498.azurecr.io/iea-mcp:0.1.3'
+
+param mcpApiClientId = 'e496647c-7753-4289-bc1d-790ba8dc1463'
+param spSiteId = 'wisishtech.sharepoint.com,9be26958-dc7b-48c1-a6bf-340888198cae,4e9afb85-451c-405e-86c4-6add17ba9b8e'
+param spResultsListId = 'fa428e9c-b043-45ec-bdbe-5194c2cf78cc'
+param spDraftsListId = '8ad7128e-660a-44eb-9c59-dc5a5848466a'
+param portalOrigins = 'http://localhost:5173,https://white-dune-0fcfdb00f.6.azurestaticapps.net'

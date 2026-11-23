@@ -27,6 +27,8 @@ from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 from openai import AzureOpenAI
 
+from check_fresh import fingerprint
+
 load_dotenv()
 ROOT = Path(__file__).resolve().parents[1]
 TEST_SET = ROOT / "eval" / "test_set.jsonl"
@@ -194,6 +196,7 @@ def main():
     restricted_q = [d for d in answerable if is_restricted(d["access_group"])]
     summary = {
         "run_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "fingerprint": fingerprint(),
         "questions": len(details),
         "hit_at_5": round(sum(d["rank"] is not None for d in answerable) / len(answerable), 3),
         "mrr": round(sum(1 / d["rank"] for d in answerable if d["rank"]) / len(answerable), 3),
