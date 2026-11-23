@@ -31,3 +31,4 @@ dev = [
 [tool.pytest.ini_options]
 pythonpath = ["mcp_server/src", "."]
 testpaths = ["mcp_server/tests"]
+asyncio_default_fixture_loop_scope = "function"
