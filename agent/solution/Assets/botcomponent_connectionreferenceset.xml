@@ -1,0 +1,5 @@
+<botcomponent_connectionreferenceset>
+  <botcomponent_connectionreference botcomponentid.schemaname="iea_impactevidenceassistant_Qsernw.tool.IEAServer_F-X" connectionreferenceid.connectionreferencelogicalname="iea_impactevidenceassistant_Qsernw.cr.shared_iea-5fiea-20s.fe67816e35364024a360acc2ea7291d4">
+    <iscustomizable>1</iscustomizable>
+  </botcomponent_connectionreference>
+</botcomponent_connectionreferenceset>

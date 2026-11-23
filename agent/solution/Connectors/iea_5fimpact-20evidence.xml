@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Connector xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <connectorid>69ba6509-6c61-4a05-8232-ed2c1bdb14f7</connectorid>
+  <description>Searches IREX program reports, impact stories and insights the signed-in user may access, lists results-framework indicators, and submits drafted progress paragraphs for human review.</description>
+  <displayname>Impact Evidence</displayname>
+  <iconbrandcolor>#007ee5</iconbrandcolor>
+  <name>iea_5fimpact-20evidence</name>
+  <connectortype>1</connectortype>
+  <capabilities>[-1,118690005,-1]</capabilities>
+  <openapidefinition>/Connector/iea_5fimpact-20evidence_openapidefinition.json</openapidefinition>
+  <connectionparameters>/Connector/iea_5fimpact-20evidence_connectionparameters.json</connectionparameters>
+  <policytemplateinstances>/Connector/iea_5fimpact-20evidence_policytemplateinstances.json</policytemplateinstances>
+  <iconblob>/Connector/iea_5fimpact-20evidence_iconblob.Png</iconblob>
+</Connector>

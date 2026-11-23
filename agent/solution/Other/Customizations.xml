@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" OrganizationVersion="9.2.26112.144" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="9.2.26112.00144">
+  <Entities />
+  <Roles />
+  <Workflows />
+  <FieldSecurityProfiles />
+  <Templates />
+  <EntityMaps />
+  <EntityRelationships />
+  <OrganizationSettings />
+  <optionsets />
+  <CustomControls />
+  <EntityDataProviders />
+  <Connectors />
+  <connectionreferences>
+    <connectionreference connectionreferencelogicalname="iea_impactevidenceassistant_Qsernw.cr.shared_iea-5fiea-20s.fe67816e35364024a360acc2ea7291d4">
+      <connectionreferencedisplayname>iea_impactevidenceassistant_Qsernw.cr.shared_iea-5fiea-20s.fe67816e35364024a360acc2ea7291d4</connectionreferencedisplayname>
+      <connectorid>/providers/Microsoft.PowerApps/apis/shared_iea-5fiea-20server-5f0cabbaaf93174726</connectorid>
+      <customconnectorid>
+        <connectorid>ae5a3aa8-bcf6-4d2f-bae7-f28580b8d231</connectorid>
+      </customconnectorid>
+      <iscustomizable>0</iscustomizable>
+      <promptingbehavior>0</promptingbehavior>
+      <statecode>0</statecode>
+      <statuscode>1</statuscode>
+    </connectionreference>
+    <connectionreference connectionreferencelogicalname="iea_sharedapprovals_ea15e">
+      <connectionreferencedisplayname>Standard approvals ImpactEvidenceAssistant-ea15e</connectionreferencedisplayname>
+      <connectorid>/providers/Microsoft.PowerApps/apis/shared_approvals</connectorid>
+      <iscustomizable>1</iscustomizable>
+      <promptingbehavior>0</promptingbehavior>
+      <statecode>0</statecode>
+      <statuscode>1</statuscode>
+    </connectionreference>
+    <connectionreference connectionreferencelogicalname="iea_sharedsharepointonline_f130c">
+      <connectionreferencedisplayname>SharePoint ImpactEvidenceAssistant-f130c</connectionreferencedisplayname>
+      <connectorid>/providers/Microsoft.PowerApps/apis/shared_sharepointonline</connectorid>
+      <iscustomizable>1</iscustomizable>
+      <promptingbehavior>0</promptingbehavior>
+      <statecode>0</statecode>
+      <statuscode>1</statuscode>
+    </connectionreference>
+  </connectionreferences>
+  <Languages>
+    <Language>1033</Language>
+  </Languages>
+</ImportExportXml>

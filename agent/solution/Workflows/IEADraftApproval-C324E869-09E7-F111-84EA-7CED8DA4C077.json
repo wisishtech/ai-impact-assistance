@@ -1,0 +1,164 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "iea_sharedsharepointonline_f130c"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      },
+      "shared_approvals": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "iea_sharedapprovals_ea15e"
+        },
+        "api": {
+          "name": "shared_approvals"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_an_item_is_created": {
+          "recurrence": {
+            "interval": 5,
+            "frequency": "Minute"
+          },
+          "splitOn": "@triggerOutputs()?['body/value']",
+          "metadata": {
+            "operationMetadataId": "0f1baa02-a22f-4b86-8755-8303956dd771"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetOnNewItems",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "https://wisishtech.sharepoint.com/sites/iea-knowledge",
+              "table": "8ad7128e-660a-44eb-9c59-dc5a5848466a"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "Start_and_wait_for_an_approval": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "a012a14c-e906-44ce-912d-8774d49237ff"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_approvals",
+              "operationId": "StartAndWaitForAnApproval",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_approvals"
+            },
+            "parameters": {
+              "approvalType": "Basic",
+              "WebhookApprovalCreationInput/title": "Draft for review:  @{triggerOutputs()?['body/Program']}  @{triggerOutputs()?['body/IndicatorId']}",
+              "WebhookApprovalCreationInput/assignedTo": "restricted.reviewer@WisishTech.onmicrosoft.com\n",
+              "WebhookApprovalCreationInput/details": "@{triggerOutputs()?['body/Draft']}\n\nSources:\n@{triggerOutputs()?['body/Citations']}",
+              "WebhookApprovalCreationInput/itemLink": "@triggerOutputs()?['body/{Link}']",
+              "WebhookApprovalCreationInput/itemLinkDescription": "Open in Draft Reviews",
+              "WebhookApprovalCreationInput/enableNotifications": true,
+              "WebhookApprovalCreationInput/enableReassignment": true
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Condition": {
+          "actions": {
+            "Update_item": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "62d65a09-cd32-497f-8284-002e2a935253"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "https://wisishtech.sharepoint.com/sites/iea-knowledge",
+                  "table": "8ad7128e-660a-44eb-9c59-dc5a5848466a",
+                  "id": "@triggerOutputs()?['body/ID']",
+                  "item/Title": "@triggerOutputs()?['body/Title']",
+                  "item/Reviewer": "@outputs('Start_and_wait_for_an_approval')?['body/responseSummary']",
+                  "item/Status/Value": "Approved",
+                  "item/DecisionDate": "@outputs('Start_and_wait_for_an_approval')?['body/completionDate']"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {
+            "Start_and_wait_for_an_approval": [
+              "Succeeded"
+            ]
+          },
+          "else": {
+            "actions": {
+              "Update_item_2": {
+                "runAfter": {},
+                "metadata": {
+                  "operationMetadataId": "e3ac97ae-ffbc-4dfc-a3a1-5cfce8b9f662"
+                },
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "connectionName": "shared_sharepointonline",
+                    "operationId": "PatchItem",
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                  },
+                  "parameters": {
+                    "dataset": "https://wisishtech.sharepoint.com/sites/iea-knowledge",
+                    "table": "8ad7128e-660a-44eb-9c59-dc5a5848466a",
+                    "id": "@triggerOutputs()?['body/ID']  ",
+                    "item/Title": "@triggerOutputs()?['body/Title']",
+                    "item/Reviewer": "@outputs('Start_and_wait_for_an_approval')?['body/responseSummary']",
+                    "item/Status/Value": "Changes requested",
+                    "item/ReviewerComment": "@outputs('Start_and_wait_for_an_approval')?['body/responseSummary']",
+                    "item/DecisionDate": "@outputs('Start_and_wait_for_an_approval')?['body/completionDate']"
+                  },
+                  "authentication": "@parameters('$authentication')"
+                }
+              }
+            }
+          },
+          "expression": {
+            "equals": [
+              "@outputs('Start_and_wait_for_an_approval')?['body/outcome']",
+              "Approve"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "30be2a47-61e4-4b77-8142-9694581cd130"
+          },
+          "type": "If"
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

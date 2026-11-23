@@ -1,0 +1,10 @@
+<botcomponent schemaname="iea_impactevidenceassistant_Qsernw.tool.IEAServer_F-X">
+  <componenttype>9</componenttype>
+  <iscustomizable>0</iscustomizable>
+  <name>IEA Server</name>
+  <parentbotid>
+    <schemaname>iea_impactevidenceassistant_Qsernw</schemaname>
+  </parentbotid>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+</botcomponent>

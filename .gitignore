@@ -3,3 +3,4 @@ data/raw/
 .env
 portal/.env.local
 data/chunks.jsonl
+agent/solution.zip
