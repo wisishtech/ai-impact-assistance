@@ -1,5 +1,7 @@
 # Impact Evidence Assistant
 
+## Builders: Wisdom and Grace Chimezie
+
 A permission-aware AI assistant that helps program, M&E and communications staff find evidence in IREX reports and draft results-framework progress sections, with every claim cited and every submission reviewed by a person.
 
 It runs where staff already work (Microsoft Teams, Microsoft 365 Copilot and a web portal) and only ever shows a user the documents they are allowed to see.
