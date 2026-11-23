@@ -30,37 +30,64 @@ It is a **tool-using AI agent**, not a standalone website: a Copilot Studio agen
 
 ## Job skills this project demonstrates
 
-Every technical requirement and bonus qualification in the IREX Applied AI Solutions Specialist posting maps to a specific part of this build.
+All 25 technical requirements in the IREX Applied AI Solutions Specialist posting were applied in the finished build: 21 fully and 4 with gaps named in the table. Each row shows how the skill was used and where the evidence is.
 
-| Skill from the posting | Where it is built |
-| --- | --- |
-| Define problems, users, value, success measures | What we are building; `docs/intake.md` |
-| Large language models, AI APIs, prompt design | Azure OpenAI; agent instructions (Component 4); code-first agent (Component 8) |
-| Retrieval-augmented generation | Components 1, 2, 3 |
-| MCP and tool calling | MCP server (Component 3), used by Copilot Studio and the code-first agent |
-| AI agents and multi-step workflows with human oversight | Draft workflow (Components 4, 5); code-first agent with tool approval (Component 8) |
-| Agent frameworks | Copilot Studio (low-code) and Microsoft Agent Framework (code), compared in a decision note |
-| Microsoft 365 Copilot, Copilot Studio | Component 4; Microsoft 365 Copilot channel |
-| Azure AI services, vector search | Azure AI Search with vectors, vectorizer, semantic ranker (Component 2) |
-| SharePoint, Microsoft Graph | Knowledge site; Graph calls from the server (Component 3) |
-| Power Platform | Power Automate approval flow (Component 5); solution export and import |
-| Connect to APIs, databases, enterprise apps, knowledge repositories | Graph API, Search API, SharePoint lists, REST endpoint for the portal (Component 9) |
-| Python | Ingestion, MCP server, evaluation, code-first agent |
-| JavaScript / TypeScript | Evidence portal in TypeScript with React, MSAL and tests (Component 9) |
-| Low-code tools | Copilot Studio, Power Automate |
-| Enterprise identity, authentication, authorization, role-based access | Entra ID, OAuth, group-based security filters, least-privilege Azure roles |
-| Privacy, security, responsible AI, data governance | Security and responsible AI controls; responsible AI card |
-| Testing on quality, usability, risk and feedback | Evaluation harness (Component 7); usability test; pilot |
-| AI monitoring and evaluation tools | Application Insights tracing; scheduled evaluation; Foundry evaluators option |
-| Knowledge organization: metadata, chunking, retrieval, permissions | Component 1 and 2; SharePoint libraries |
-| Licensing, consumption cost, feasibility | Cost sheet; tier choices; release document cost section |
-| Application deployment, source control | Container Apps, Static Web Apps, Bicep, GitHub Actions |
-| Prototype to sustained operational use | Prove sustained use (after Component 9); release document |
-| Reusable templates and implementation guidance | `docs/` templates, decision notes, runbook |
-| Multilingual, global users | French and Arabic documents and tests |
-| Integrate with websites and apps | Teams, Microsoft 365 Copilot, SharePoint, web page, portal (Components 4, 6, 9) |
+| Skill from the posting | How it was applied | Evidence |
+| --- | --- | --- |
+| Define problems, users, value, success measures | Problem: staff spend hours finding evidence across reports and drafting progress sections. Users: program officers, M&E, communications, reviewers. Success set up front as release gates: 0 permission leaks, retrieval hit rate 0.85 or more, out-of-scope refusals 0.90 or more. | README; eval/check\_thresholds.py |
+| Large language models, AI APIs, prompt design | Azure OpenAI gpt-4.1-mini and text-embedding-3-small, called with Entra ID, no keys. One shared agent/instructions.md for both agents, revised from eval findings: a scope rule, IREX-results-only drafting rules, and submit the confirmed text word for word. | Refusals 0.9 to 1.0; overclaiming fixed |
+| Retrieval-augmented generation | 20 IREX documents split into 750 passages with title, page and URL, searched with keyword, vector and semantic ranking together. Every claim cites Title, page, URL; the agent refuses when passages do not answer. | hit@5 1.00, MRR 0.987, groundedness 5.0 |
+| MCP and tool calling | Python MCP server with 3 tools (search\_evidence, get\_indicators, submit\_draft\_for\_review). Called by Copilot Studio, by Agent Framework (MCP 2.x client to 1.x server) and by the eval. Returns readable citation text plus structured data. | mcp\_server/; decisions 0002, 0008 |
+| AI agents and multi-step workflows with human oversight | Drafting chain: indicators, then evidence per indicator, then a draft, user confirmation, submission, reviewer approval in Power Automate and a Teams notice to the author. The code-first agent blocks submission in code until a person types y. | Review items 5 and 6; approval message in Teams |
+| Agent frameworks | Copilot Studio (new UI, GitHub Copilot harness) and Microsoft Agent Framework 1.26 built on the same tools and instructions, then compared. | decision 0005 |
+| Microsoft 365 Copilot, Copilot Studio | Agent published to Teams and Microsoft 365 Copilot, shared through the IEA-AllStaff group via a Dataverse team. MCP tool added through a custom connector with per-user OAuth sign-in. | Teams and Copilot screenshots |
+| Azure AI services, vector search | Azure AI Search Basic with an integrated vectorizer (managed identity), semantic ranker and a group security filter; Azure OpenAI model deployments. | Index iea-chunks-v1 |
+| SharePoint, Microsoft Graph | Knowledge site with All Staff and Restricted libraries. Results Framework and Draft Reviews lists read and written through Graph by the server's managed identity, limited with Sites.Selected. | iea-knowledge site |
+| Power Platform | IEA-Sandbox environment on pay-as-you-go billing, one solution holding the agent, connectors and flow, exported to Git with pac. | agent/solution/ |
+| Connect to APIs, databases, enterprise apps, knowledge repositories | Azure AI Search REST, Microsoft Graph, SharePoint lists, the Power Platform API through the Microsoft 365 Agents SDK, and the server's own REST route /api/my-drafts. | mcp\_server/, portal/ |
+| Python | Ingestion pipeline, MCP server, 24 pytest tests, evaluation harness and the code-first agent, managed with uv. | 24 tests passing |
+| JavaScript / TypeScript | React and TypeScript portal: MSAL sign-in, Agents SDK client 1.10.2, Web Chat and a My drafts panel; type-checked and built in CI. | portal/; hosted portal |
+| Low-code tools | Copilot Studio agent, Power Automate approval flow, Dataverse team for group sharing. | Solution export |
+| Enterprise identity, authentication, authorization, role-based access | Six app registrations, one job each. The user's own token flows to the server, which checks it and filters search by the user's groups. Managed identities for services; GitHub signs in with OIDC; a conditional role lets the pipeline grant only 3 roles. | 0 leaks; docs/security.md |
+| Privacy, security, responsible AI, data governance | Responsible AI card, 13 security controls, a kill switch, logs without document text, restricted test documents, no personal data indexed. | docs/responsible-ai.md |
+| Testing on quality, usability, risk and feedback | 49-question eval run as two real users; release gate plus a fingerprint that blocks releases with stale results; manual end-to-end tests in Teams, the portal and the CLI; thumbs feedback. Gap: no usability sessions with real staff yet. | eval/results/; operations log |
+| AI monitoring and evaluation tools | OpenTelemetry spans to Application Insights, KQL usage queries, LLM-as-judge grading, eval gate in CI and release. Gap: Foundry evaluators not used. | docs/sustained-use.md |
+| Knowledge organization: metadata, chunking, retrieval, permissions | sources.csv catalogue (program, country, year, theme, language, type, access group); page-aware chunks; restricted library and group\_ids on every passage. Gap: chunking comparison note not written. | data/, ingestion/ |
+| Licensing, consumption cost, feasibility | Microsoft 365 Business Standard trial; Copilot Studio moved to pay-as-you-go after the Developer environment ran out of credits; $50 budget alert; single-revision container, Free Static Web Apps; region chosen by capacity. | decision 0004; runbook costs |
+| Application deployment, source control | Server built in Azure Container Registry and run on Container Apps; portal on Static Web Apps; Bicep for all Azure resources; GitHub Actions for CI, server release with health check and rollback, and portal deploy. | Release 0.1.4 through GitHub |
+| Prototype to sustained operational use | Runbook, sustained-use checklist (8 of 12 done), operations log and a monthly review with usage queries. | docs/runbook.md |
+| Reusable templates and implementation guidance | Eight decision notes, runbook, README, and an eval harness that works for any document set with a sources.csv. | docs/decisions/ |
+| Multilingual, global users | Partly: the agent replies in the language of the question. Gap: all indexed documents are English and no other language was evaluated. | docs/responsible-ai.md |
+| Integrate with websites and apps | Teams, Microsoft 365 Copilot, a hosted web portal, a command-line agent and a REST route. | Portal URL; Teams app |
 
 Years of IT experience and real organizational adoption cannot come from a solo project; they come from your work history, including the AI recruitment work at IREX.
+
+## As built: what changed from this plan
+
+The build is live and passes every release gate; 18 changes from the plan below were forced by the platform or found in testing. Where a later section still shows the original plan, this table and the repository are what was actually built.
+
+| Area | Planned | As built | Why |
+| --- | --- | --- | --- |
+| Azure region | East US 2 | East US; Static Web Apps in East US 2 | East US 2 had no capacity; Static Web Apps Free is not offered in East US |
+| Power Platform environment | Developer environment | IEA-Sandbox (Sandbox) on a pay-as-you-go billing plan linked to Azure | The Developer environment ran out of Copilot Studio credits and cannot use pay-as-you-go |
+| Agent authentication | Authenticate manually with Entra ID | Authenticate with Microsoft | The new Copilot Studio UI has no manual option |
+| MCP tool name | Impact Evidence | IEA Server | Name already taken in the tenant |
+| Sharing the agent | Share with IEA-AllStaff | Dataverse team mapped to IEA-AllStaff, plus the IEA Server connector shared with the group; each user creates a connection once | Sharing failed until the group existed in Dataverse; new users saw "Connector information unavailable" |
+| Index creation | Python SDK from\_dict | REST PUT to Azure AI Search | The SDK method was not available |
+| MCP SDK | Latest mcp | Server pinned to mcp 1.x with allowed hosts; code-first agent in its own project on mcp 2.x | mcp 2.x renamed FastMCP; 421 errors behind Container Apps until hosts were allowed |
+| search\_evidence output | List of dicts | Readable "Title, page X (URL)" text plus structured data | Copilot showed raw JSON as the citation label |
+| Draft Reviews list | Submitter name | Added SubmittedByEmail | Needed to send the Teams notice to the author |
+| Web page (Component 6) | Web Chat with token exchange | Merged into the portal, using the Microsoft 365 Agents SDK client 1.10.2 | Embed code is hidden with Authenticate with Microsoft; new-UI agents need SDK 1.10+ |
+| Portal (Component 9) | Vite, VITE\_ variables | esbuild on Microsoft's WebChat React sample; settings.ts; hosted on Static Web Apps by GitHub Actions | Followed the official sample; the local SWA CLI deploy failed on Windows |
+| CORS | One portal origin | PORTAL\_ORIGIN lists local and hosted origins | The hosted portal was blocked until its origin was added |
+| Agent instructions | Answer and draft rules | Added a scope rule and strict drafting rules: IREX results only, "No evidence found" when none, submit the confirmed text word for word | Eval caught a poem; the code-first agent overclaimed and used UAE figures |
+| Evaluation (Component 7) | 50 hand-written questions | 49 generated from passages and reviewed (7 restricted, 10 out-of-scope), run as two real users, with a fingerprint that blocks stale results | Faster to build; caveat noted in the README |
+| Code-first agent (Component 8) | Same folder as the server | agent\_code/ uv project, Agent Framework 1.26, approval required on submit | Agent Framework needs mcp 2.x |
+| Container app | Multiple revisions | Single-revision mode, old revisions deactivated | Each active revision kept a paid replica running |
+| Release | azd | Bicep plus GitHub Actions with OIDC; federated subject includes owner and repo IDs; conditional role to grant only 3 roles | GitHub's subject format had changed; what-if needs permission to create role assignments |
+| Local tooling | Bash scripts | MSYS\_NO\_PATHCONV=1 in Git Bash; image built from a minimal folder | Git Bash rewrote paths; packing the whole repo hung on node\_modules |
+
+**Live now:** server 0.1.4 on Container Apps, portal at https://white-dune-0fcfdb00f.6.azurestaticapps.net, agent in Teams and Microsoft 365 Copilot, repository wisishtech/ai-impact-assistance.
 
 ## Where people use it
 
@@ -74,7 +101,7 @@ One agent is built once in Copilot Studio and published to several channels; eve
 | Internal web page or intranet | Chat widget embedded in a page (Component 6) | Program portals, the M&E dashboard, the intranet home page | Custom website channel + Web Chat with sign-in |
 | Custom app | The app calls the agent through the Direct Line API (Component 6) | A future program-management or reporting app | Direct Line token endpoint + app code |
 
-**Authentication choice.** Copilot Studio's default "Authenticate with Microsoft" sets up Entra ID automatically for Teams, Power Apps and Microsoft 365 Copilot. To also publish to a website or custom app while still requiring sign-in, set **Authenticate manually** with Microsoft Entra ID. This blueprint uses manual authentication so every channel above works and every user is signed in.
+**Authentication choice (as built).** The agent uses Copilot Studio's "Authenticate with Microsoft", which signs users in with Entra ID in Teams and Microsoft 365 Copilot. The new Copilot Studio UI has no "Authenticate manually" option, so the website channel is the portal: it signs users in with MSAL and talks to the agent through the Microsoft 365 Agents SDK (Component 9). Every channel still requires sign-in.
 
 **Practical day in use.**
 
@@ -440,145 +467,62 @@ This script creates the dev environment with the Azure CLI so you can start buil
 
 ```bash
 #!/usr/bin/env bash
-# Provision Azure resources for the Impact Evidence Assistant.
-# Run in Git Bash:  bash scripts/provision_azure.sh [dev|test|prod]
-# Safe to re-run: anything that already exists is skipped.
 set -euo pipefail
-export MSYS_NO_PATHCONV=1          # stop Git Bash turning /subscriptions/... into C:/Program Files/Git/...
-
-# ---------- Settings ----------
-ENV=${1:-dev}
-LOC=${LOC:-eastus}
-RG=rg-iea-$ENV
-SRCH=srch-iea-$ENV
-AOAI=aif-iea-$ENV
-LAW=log-iea-$ENV
-APPI=appi-iea-$ENV
-CAE=cae-iea-$ENV
-
-# Globally unique names. Dev already exists with these names; other environments get a stable suffix.
-SUB=$(az account show --query id -o tsv)
-SUFFIX=$(echo -n "$SUB-$ENV" | md5sum | cut -c1-5)
-if [ "$ENV" = "dev" ]; then
-  ST=${ST:-stieadev5954}
-  ACR=${ACR:-acrieadev9498}
-  KV=${KV:-kv-iea-dev-25551}
-else
-  ST=${ST:-stiea${ENV}${SUFFIX}}
-  ACR=${ACR:-acriea${ENV}${SUFFIX}}
-  KV=${KV:-kv-iea-${ENV}-${SUFFIX}}
-fi
-
+ENV=dev; LOC=eastus2; RG=rg-iea-$ENV
+SRCH=srch-iea-$ENV; AOAI=aif-iea-$ENV; ST=stiea${ENV}$RANDOM
+ACR=acriea${ENV}$RANDOM; KV=kv-iea-$ENV-$RANDOM
+LAW=log-iea-$ENV; APPI=appi-iea-$ENV; CAE=cae-iea-$ENV
 ME=$(az ad signed-in-user show --query id -o tsv)
-exists() { az resource show -g "$RG" -n "$1" --resource-type "$2" -o none 2>/dev/null; }
-step() { echo; echo "==> $*"; }
 
-# ---------- 1. Resource group ----------
-step "Resource group $RG ($LOC)"
-az group create -n "$RG" -l "$LOC" -o none
+# 1. Resource group: the container for this environment
+az group create -n $RG -l $LOC
 
-# ---------- 2. Azure AI Search ----------
-step "Azure AI Search $SRCH"
-if exists "$SRCH" Microsoft.Search/searchServices; then echo "exists, skipping"; else
-  az search service create -n "$SRCH" -g "$RG" -l "$LOC" --sku basic \
-    --semantic-search free --auth-options aadOrApiKey \
-    --aad-auth-failure-mode http401WithBearerChallenge --identity-type SystemAssigned -o none
-fi
+# 2. Azure AI Search with semantic ranker and Entra auth
+az search service create -n $SRCH -g $RG -l $LOC --sku basic \
+  --semantic-search free --auth-options aadOrApiKey \
+  --aad-auth-failure-mode http401WithBearerChallenge --identity-type SystemAssigned
 
-# ---------- 3. Azure OpenAI + models ----------
-step "Azure OpenAI $AOAI"
-if exists "$AOAI" Microsoft.CognitiveServices/accounts; then echo "exists, skipping"; else
-  az cognitiveservices account create -n "$AOAI" -g "$RG" -l "$LOC" \
-    --kind OpenAI --sku S0 --custom-domain "$AOAI" -o none
-fi
+# 3. Azure OpenAI and model deployments
+az cognitiveservices account create -n $AOAI -g $RG -l $LOC \
+  --kind OpenAI --sku S0 --custom-domain $AOAI
+az cognitiveservices account deployment create -n $AOAI -g $RG \
+  --deployment-name text-embedding-3-small --model-name text-embedding-3-small \
+  --model-version 1 --model-format OpenAI --sku-name Standard --sku-capacity 50
+az cognitiveservices account deployment create -n $AOAI -g $RG \
+  --deployment-name gpt-4.1-mini --model-name gpt-4.1-mini \
+  --model-version 2025-04-14 --model-format OpenAI --sku-name GlobalStandard --sku-capacity 50
 
-deploy_model() {  # name version sku
-  if az cognitiveservices account deployment show -n "$AOAI" -g "$RG" --deployment-name "$1" -o none 2>/dev/null; then
-    echo "model $1 exists, skipping"
-  else
-    az cognitiveservices account deployment create -n "$AOAI" -g "$RG" \
-      --deployment-name "$1" --model-name "$1" --model-version "$2" \
-      --model-format OpenAI --sku-name "$3" --sku-capacity 50 -o none
-  fi
-}
-deploy_model text-embedding-3-small 1 Standard
-deploy_model gpt-4.1-mini 2025-04-14 GlobalStandard
+# 4. Storage, registry, secrets, monitoring
+az storage account create -n $ST -g $RG -l $LOC --sku Standard_LRS --allow-blob-public-access false
+az acr create -n $ACR -g $RG --sku Basic
+az keyvault create -n $KV -g $RG -l $LOC --enable-rbac-authorization true
+az monitor log-analytics workspace create -n $LAW -g $RG -l $LOC
+az monitor app-insights component create --app $APPI -g $RG -l $LOC \
+  --workspace $(az monitor log-analytics workspace show -n $LAW -g $RG --query id -o tsv)
 
-# ---------- 4. Storage, registry, Key Vault ----------
-step "Storage $ST"
-if exists "$ST" Microsoft.Storage/storageAccounts; then echo "exists, skipping"; else
-  az storage account create -n "$ST" -g "$RG" -l "$LOC" --sku Standard_LRS \
-    --allow-blob-public-access false --min-tls-version TLS1_2 -o none
-fi
+# 5. Container Apps environment (the MCP server is deployed into it later)
+az containerapp env create -n $CAE -g $RG -l $LOC \
+  --logs-workspace-id $(az monitor log-analytics workspace show -n $LAW -g $RG --query customerId -o tsv) \
+  --logs-workspace-key $(az monitor log-analytics workspace get-shared-keys -n $LAW -g $RG --query primarySharedKey -o tsv)
 
-step "Container registry $ACR"
-if exists "$ACR" Microsoft.ContainerRegistry/registries; then echo "exists, skipping"; else
-  az acr create -n "$ACR" -g "$RG" --sku Basic -o none
-fi
+# 6. Roles for you (the builder) so local scripts work without keys
+SRCH_ID=$(az search service show -n $SRCH -g $RG --query id -o tsv)
+AOAI_ID=$(az cognitiveservices account show -n $AOAI -g $RG --query id -o tsv)
+for ROLE in "Search Service Contributor" "Search Index Data Contributor"; do
+  az role assignment create --assignee $ME --role "$ROLE" --scope $SRCH_ID; done
+az role assignment create --assignee $ME --role "Cognitive Services OpenAI User" --scope $AOAI_ID
+az role assignment create --assignee $ME --role "Key Vault Secrets Officer" \
+  --scope $(az keyvault show -n $KV --query id -o tsv)
 
-step "Key Vault $KV"
-if exists "$KV" Microsoft.KeyVault/vaults; then echo "exists, skipping"; else
-  az keyvault create -n "$KV" -g "$RG" -l "$LOC" --enable-rbac-authorization true -o none
-fi
+# 7. Let the search service call OpenAI to vectorize queries
+az role assignment create --role "Cognitive Services OpenAI User" --scope $AOAI_ID \
+  --assignee $(az search service show -n $SRCH -g $RG --query identity.principalId -o tsv)
 
-# ---------- 5. Monitoring ----------
-step "Log Analytics $LAW"
-if exists "$LAW" Microsoft.OperationalInsights/workspaces; then echo "exists, skipping"; else
-  az monitor log-analytics workspace create -n "$LAW" -g "$RG" -l "$LOC" -o none
-fi
-LAW_ID=$(az monitor log-analytics workspace show -n "$LAW" -g "$RG" --query id -o tsv)
+# 8. Budget alert
+az consumption budget create --budget-name iea-$ENV --amount 50 --time-grain Monthly \
+  --start-date $(date +%Y-%m-01) --end-date 2027-12-31 --resource-group $RG
 
-step "Application Insights $APPI"
-if exists "$APPI" Microsoft.Insights/components; then echo "exists, skipping"; else
-  az monitor app-insights component create --app "$APPI" -g "$RG" -l "$LOC" --workspace "$LAW_ID" -o none
-fi
-
-# ---------- 6. Container Apps environment ----------
-step "Container Apps environment $CAE"
-if exists "$CAE" Microsoft.App/managedEnvironments; then echo "exists, skipping"; else
-  az containerapp env create -n "$CAE" -g "$RG" -l "$LOC" \
-    --logs-workspace-id "$(az monitor log-analytics workspace show -n "$LAW" -g "$RG" --query customerId -o tsv)" \
-    --logs-workspace-key "$(az monitor log-analytics workspace get-shared-keys -n "$LAW" -g "$RG" --query primarySharedKey -o tsv)" \
-    -o none
-fi
-
-# ---------- 7. Role assignments ----------
-step "Role assignments"
-SRCH_ID=$(az search service show -n "$SRCH" -g "$RG" --query id -o tsv)
-AOAI_ID=$(az cognitiveservices account show -n "$AOAI" -g "$RG" --query id -o tsv)
-KV_ID=$(az keyvault show -n "$KV" --query id -o tsv)
-SRCH_MI=$(az search service show -n "$SRCH" -g "$RG" --query identity.principalId -o tsv)
-
-assign() {  # principalId principalType role scope
-  az role assignment create --assignee-object-id "$1" --assignee-principal-type "$2" \
-    --role "$3" --scope "$4" -o none 2>/dev/null || echo "  ($3 already assigned)"
-}
-# You (the builder), so local scripts work without keys
-assign "$ME" User "Search Service Contributor"     "$SRCH_ID"
-assign "$ME" User "Search Index Data Contributor"  "$SRCH_ID"
-assign "$ME" User "Cognitive Services OpenAI User" "$AOAI_ID"
-assign "$ME" User "Key Vault Secrets Officer"      "$KV_ID"
-# The search service, so it can vectorize queries with OpenAI
-assign "$SRCH_MI" ServicePrincipal "Cognitive Services OpenAI User" "$AOAI_ID"
-
-# ---------- 8. Summary for .env ----------
-step "Done. Values for .env:"
-cat <<EOF
-AZURE_TENANT_ID=$(az account show --query tenantId -o tsv)
-AZURE_SUBSCRIPTION_ID=$SUB
-SEARCH_ENDPOINT=https://$SRCH.search.windows.net
-SEARCH_INDEX=iea-chunks-v1
-AOAI_ENDPOINT=https://$AOAI.openai.azure.com
-AOAI_EMBED_DEPLOYMENT=text-embedding-3-small
-AOAI_CHAT_DEPLOYMENT=gpt-4.1-mini
-STORAGE_ACCOUNT=$ST
-ACR_NAME=$ACR
-KEY_VAULT=$KV
-APPLICATIONINSIGHTS_CONNECTION_STRING=$(az monitor app-insights component show --app "$APPI" -g "$RG" --query connectionString -o tsv)
-EOF
-
-echo
-echo "Budget: set it in the portal (Cost Management > Budgets); the CLI budget command is unreliable."
+echo "Done. Copy these names into .env: $SRCH $AOAI $ST $ACR $KV $APPI"
 ```
 
 **Before running:** check that your region offers the models with `az cognitiveservices model list -l eastus2 -o table`, and swap the chat model name and version for a current one if `gpt-4.1-mini` has been retired. Role assignments can take a few minutes to apply.
@@ -1241,6 +1185,8 @@ Use connection references (created automatically inside the solution) so the flo
 
 ## Component 6 — Website and app integration
 
+**As built:** this web page was not built as written. Manual authentication is not available in the new Copilot Studio UI, so the website channel became the portal in Component 9 (MSAL sign-in plus the Microsoft 365 Agents SDK client 1.10.2). The steps below are kept for agents that use manual authentication.
+
 To put the agent on a web page or inside an app, you embed Microsoft's Web Chat control (or call the Direct Line API) and sign the user in with Entra ID, so the same permissions apply as in Teams.
 
 **Pick the integration that fits.**
@@ -1344,6 +1290,8 @@ npx @azure/static-web-apps-cli deploy web/public --deployment-token $TOKEN --env
 
 ## Component 7 — Evaluation harness
 
+**As built:** eval/generate\_testset.py writes 2 questions per document from the indexed passages, plus 10 out-of-scope prompts (49 in total after review). eval/run\_eval.py signs in as program.officer and restricted.reviewer, calls the deployed server, answers with agent/instructions.md and grades with gpt-4.1-mini. eval/check\_thresholds.py is the gate and eval/check\_fresh.py blocks releases when instructions, test set, sources or server code changed since the last run. Latest: 0 leaks, hit@5 1.00, groundedness 5.0, correctness 1.00, refusals 1.00.
+
 The harness is how you prove the agent works: it signs in as each test user, sends 50 fixed questions through the real MCP server, writes answers with the same instructions as the agent, scores them, and fails the build if quality drops.
 
 **Setup: a sign-in app for test runs**
@@ -1443,6 +1391,8 @@ uv run python eval/check_thresholds.py eval/results/$(date +%F)-baseline.csv
 
 ## Component 8 — Code-first agent (Microsoft Agent Framework)
 
+**As built:** the agent is agent\_code/iea\_agent.py in its own uv project (Agent Framework 1.26 needs mcp 2.x; the server stays on 1.x). It signs in through the iea-eval public client, connects with MCPStreamableHTTPTool, and marks submit\_draft\_for\_review as always requiring approval, so nothing is written until a person types y. Run: cd agent\_code, uv sync, uv run python iea\_agent.py --user \<upn>.
+
 A second version of the drafting agent, written in Python with Microsoft Agent Framework, uses the same MCP server and instructions; comparing it with the Copilot Studio agent shows you can choose between low-code and code-first for a given job.
 
 **Why build it.** The posting asks for agent frameworks and for bringing in other technologies when they fit better. Code-first agents give you version-controlled logic, unit tests, custom workflows and any model; Copilot Studio gives faster building, Microsoft 365 channels and easier handoff to non-developers. The comparison is the deliverable.
@@ -1524,6 +1474,8 @@ Add an `--agent code|studio` switch to `run_eval.py` so both agents answer the s
 | Recommendation | your conclusion | your conclusion |
 
 ## Component 9 — Evidence portal (TypeScript web app)
+
+**As built:** the portal follows Microsoft's copilotstudio-webchat-react sample, bundled with esbuild, with IDs in src/settings.ts (no secrets). Sign-in uses the iea-webchat app (CopilotStudio.Copilots.Invoke and Evidence.Read). It is hosted at https://white-dune-0fcfdb00f.6.azurestaticapps.net and deployed by .github/workflows/portal.yml. Run locally with npm start on http://localhost:5173 (use localhost, not 127.0.0.1).
 
 The portal is a small web app for staff: one tab embeds the agent chat, the other shows "My drafts" with their review status. It replaces the single HTML page from Component 6 and demonstrates TypeScript, React, MSAL sign-in, calling a secured API, and front-end tests.
 
