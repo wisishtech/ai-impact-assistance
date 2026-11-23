@@ -1,15 +1,6 @@
 {
   "properties": {
     "connectionReferences": {
-      "shared_approvals": {
-        "runtimeSource": "embedded",
-        "connection": {
-          "connectionReferenceLogicalName": "iea_sharedapprovals_ea15e"
-        },
-        "api": {
-          "name": "shared_approvals"
-        }
-      },
       "shared_sharepointonline": {
         "runtimeSource": "embedded",
         "connection": {
@@ -17,6 +8,15 @@
         },
         "api": {
           "name": "shared_sharepointonline"
+        }
+      },
+      "shared_approvals": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "iea_sharedapprovals_ea15e"
+        },
+        "api": {
+          "name": "shared_approvals"
         }
       },
       "shared_teams": {
@@ -33,13 +33,13 @@
       "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
       "contentVersion": "1.0.0.0",
       "parameters": {
-        "$connections": {
-          "defaultValue": {},
-          "type": "Object"
-        },
         "$authentication": {
           "defaultValue": {},
           "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
         }
       },
       "triggers": {
@@ -54,16 +54,15 @@
           },
           "type": "OpenApiConnection",
           "inputs": {
-            "host": {
-              "connectionName": "shared_sharepointonline",
-              "operationId": "GetOnNewItems",
-              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
-            },
             "parameters": {
               "dataset": "https://wisishtech.sharepoint.com/sites/iea-knowledge",
               "table": "8ad7128e-660a-44eb-9c59-dc5a5848466a"
             },
-            "authentication": "@parameters('$authentication')"
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "operationId": "GetOnNewItems",
+              "connectionName": "shared_sharepointonline"
+            }
           }
         }
       },
@@ -75,11 +74,6 @@
           },
           "type": "OpenApiConnectionWebhook",
           "inputs": {
-            "host": {
-              "connectionName": "shared_approvals",
-              "operationId": "StartAndWaitForAnApproval",
-              "apiId": "/providers/Microsoft.PowerApps/apis/shared_approvals"
-            },
             "parameters": {
               "approvalType": "Basic",
               "WebhookApprovalCreationInput/title": "Draft for review:  @{triggerOutputs()?['body/Program']}  @{triggerOutputs()?['body/IndicatorId']}",
@@ -90,33 +84,35 @@
               "WebhookApprovalCreationInput/enableNotifications": true,
               "WebhookApprovalCreationInput/enableReassignment": true
             },
-            "authentication": "@parameters('$authentication')"
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_approvals",
+              "operationId": "StartAndWaitForAnApproval",
+              "connectionName": "shared_approvals"
+            }
           }
         },
         "Condition": {
           "actions": {
             "Update_item": {
-              "runAfter": {},
               "metadata": {
                 "operationMetadataId": "62d65a09-cd32-497f-8284-002e2a935253"
               },
               "type": "OpenApiConnection",
               "inputs": {
-                "host": {
-                  "connectionName": "shared_sharepointonline",
-                  "operationId": "PatchItem",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
-                },
                 "parameters": {
                   "dataset": "https://wisishtech.sharepoint.com/sites/iea-knowledge",
                   "table": "8ad7128e-660a-44eb-9c59-dc5a5848466a",
                   "id": "@triggerOutputs()?['body/ID']",
                   "item/Title": "@triggerOutputs()?['body/Title']",
-                  "item/Reviewer": "@outputs('Start_and_wait_for_an_approval')?['body/responseSummary']",
+                  "item/Reviewer": "@concat(outputs('Start_and_wait_for_an_approval')?['body/responses']?[0]?['responder/displayName'], ' (', outputs('Start_and_wait_for_an_approval')?['body/responses']?[0]?['responder/email'], ')')",
                   "item/Status/Value": "Approved",
                   "item/DecisionDate": "@outputs('Start_and_wait_for_an_approval')?['body/completionDate']"
                 },
-                "authentication": "@parameters('$authentication')"
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "operationId": "PatchItem",
+                  "connectionName": "shared_sharepointonline"
+                }
               }
             },
             "Post_message_in_a_chat_or_channel": {
@@ -130,18 +126,17 @@
               },
               "type": "OpenApiConnection",
               "inputs": {
-                "host": {
-                  "connectionName": "shared_teams",
-                  "operationId": "PostMessageToConversation",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams"
-                },
                 "parameters": {
                   "poster": "Flow bot",
                   "location": "Chat with Flow bot",
                   "body/recipient": "@{triggerOutputs()?['body/SubmittedByEmail']};",
-                  "body/messageBody": "<p>Your draft@{outputs('Update_item')?['body/Title']} was approved. @{outputs('Start_and_wait_for_an_approval')?['body/responseSummary']}</p>"
+                  "body/messageBody": "<p class=\"editor-paragraph\">Your draft for @{triggerBody()?['Program']} @{triggerBody()?['IndicatorId']} was approved.</p><p class=\"editor-paragraph\">Reviewer: @{concat(outputs('Start_and_wait_for_an_approval')?['body/responses']?[0]?['responder/displayName'], ' (', outputs('Start_and_wait_for_an_approval')?['body/responses']?[0]?['responder/email'], ')')}</p><p class=\"editor-paragraph\">Comment: @{coalesce(first(outputs('Start_and_wait_for_an_approval')?['body/responses'])?['comments'], 'No comment')}</p><p class=\"editor-paragraph\">Decided: @{convertFromUtc(outputs('Start_and_wait_for_an_approval')?['body/completionDate'], 'Eastern Standard Time', 'dd MMM yyyy, h:mm tt')}  ET (Washington, DC)</p>"
                 },
-                "authentication": "@parameters('$authentication')"
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+                  "operationId": "PostMessageToConversation",
+                  "connectionName": "shared_teams"
+                }
               }
             }
           },
@@ -153,28 +148,26 @@
           "else": {
             "actions": {
               "Update_item_2": {
-                "runAfter": {},
                 "metadata": {
                   "operationMetadataId": "e3ac97ae-ffbc-4dfc-a3a1-5cfce8b9f662"
                 },
                 "type": "OpenApiConnection",
                 "inputs": {
-                  "host": {
-                    "connectionName": "shared_sharepointonline",
-                    "operationId": "PatchItem",
-                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
-                  },
                   "parameters": {
                     "dataset": "https://wisishtech.sharepoint.com/sites/iea-knowledge",
                     "table": "8ad7128e-660a-44eb-9c59-dc5a5848466a",
                     "id": "@triggerOutputs()?['body/ID']  ",
                     "item/Title": "@triggerOutputs()?['body/Title']",
-                    "item/Reviewer": "@outputs('Start_and_wait_for_an_approval')?['body/responseSummary']",
+                    "item/Reviewer": "@concat(outputs('Start_and_wait_for_an_approval')?['body/responses']?[0]?['responder/displayName'], ' (', outputs('Start_and_wait_for_an_approval')?['body/responses']?[0]?['responder/email'], ')')",
                     "item/Status/Value": "Changes requested",
-                    "item/ReviewerComment": "@outputs('Start_and_wait_for_an_approval')?['body/responseSummary']",
+                    "item/ReviewerComment": "@coalesce(first(outputs('Start_and_wait_for_an_approval')?['body/responses'])?['comments'], 'No comment')",
                     "item/DecisionDate": "@outputs('Start_and_wait_for_an_approval')?['body/completionDate']"
                   },
-                  "authentication": "@parameters('$authentication')"
+                  "host": {
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                    "operationId": "PatchItem",
+                    "connectionName": "shared_sharepointonline"
+                  }
                 }
               },
               "Post_message_in_a_chat_or_channel_2": {
@@ -188,18 +181,17 @@
                 },
                 "type": "OpenApiConnection",
                 "inputs": {
-                  "host": {
-                    "connectionName": "shared_teams",
-                    "operationId": "PostMessageToConversation",
-                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams"
-                  },
                   "parameters": {
                     "poster": "Flow bot",
                     "location": "Chat with Flow bot",
                     "body/recipient": "@{triggerOutputs()?['body/SubmittedByEmail']};",
-                    "body/messageBody": "<p>Your draft @{outputs('Update_item_2')?['body/Title']} needs changes. @{outputs('Start_and_wait_for_an_approval')?['body/responseSummary']}</p>"
+                    "body/messageBody": "<p class=\"editor-paragraph\">Your draft for @{triggerBody()?['Program']} @{triggerBody()?['IndicatorId']} needs changes.</p><p class=\"editor-paragraph\">Reviewer: @{concat(outputs('Start_and_wait_for_an_approval')?['body/responses']?[0]?['responder/displayName'], ' (', outputs('Start_and_wait_for_an_approval')?['body/responses']?[0]?['responder/email'], ')')}</p><br><p class=\"editor-paragraph\">Comment: @{coalesce(first(outputs('Start_and_wait_for_an_approval')?['body/responses'])?['comments'], 'No comment')}</p><br><p class=\"editor-paragraph\">Please update the draft with the assistant and submit it again.</p>"
                   },
-                  "authentication": "@parameters('$authentication')"
+                  "host": {
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+                    "operationId": "PostMessageToConversation",
+                    "connectionName": "shared_teams"
+                  }
                 }
               }
             }
@@ -217,7 +209,7 @@
         }
       }
     },
-    "templateName": ""
+    "templateName": null
   },
   "schemaVersion": "1.0.0.0"
 }
