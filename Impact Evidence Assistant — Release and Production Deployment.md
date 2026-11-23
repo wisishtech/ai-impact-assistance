@@ -2,6 +2,66 @@
 
 This document takes the working build from the blueprint to a production service: it explains what each environment is and where it physically runs, gives the commands to create them, automates every deployment with GitHub Actions, gates releases on evaluation scores, and covers the pilot, monitoring, rollback and ownership.
 
+## As built: how releases work today
+
+One environment (dev) is live and every server release now goes through GitHub Actions with a quality gate, a health check and automatic rollback. Test and production environments, the pilot and the agent pipeline in later sections are still plans; each section below starts with a note on its status.
+
+**What runs where**
+
+| Part | Where | How it is released |
+| --- | --- | --- |
+| MCP server 0.1.4 | Azure Container Apps ca-iea-mcp-dev, East US, single-revision mode | Release MCP server workflow (manual, version number as input) |
+| Web portal | Azure Static Web Apps swa-iea-dev (Free), East US 2 | Deploy portal workflow on every push to portal/ |
+| Copilot Studio agent and approval flow | Power Platform IEA-Sandbox, solution Impact Evidence Assistant | Published in Copilot Studio; solution exported to agent/solution with pac |
+| Search index and documents | Azure AI Search srch-iea-dev, index iea-chunks-v1 | Ingestion scripts run by hand |
+| Azure resources | rg-iea-dev | infra/main.bicep; what-if compared against dev by a workflow |
+
+**Workflows in .github/workflows/**
+
+| Workflow | Trigger | What it does |
+| --- | --- | --- |
+| CI (ci.yml) | Every push and pull request | Server unit tests; eval freshness and threshold checks; portal type-check and build; Bicep compile |
+| Release MCP server (release-server.yml) | Manual, version input | Gate (tests + eval checks), build image in ACR, deploy a new revision, check /healthz for up to 5 minutes, roll back to the previous image if it fails |
+| Deploy portal (portal.yml) | Push to portal/ | npm ci, build, upload to Static Web Apps with the deployment token secret |
+| Infra what-if (dev) (infra-whatif.yml) | Manual and pull requests touching infra/ | Shows what Bicep would change in rg-iea-dev; changes nothing |
+
+**Release gates as implemented**
+
+| Check | Rule | Latest |
+| --- | --- | --- |
+| Restricted documents leaked to an all-staff user | 0 | 0 |
+| Expected document in top 5 | at least 0.85 | 1.00 |
+| Reviewer finds restricted documents | at least 0.85 | 1.00 |
+| Groundedness (1 to 5) | at least 4.0 | 5.0 |
+| Correctness | at least 0.75 | 1.00 |
+| Out-of-scope questions refused | at least 0.90 | 1.00 |
+| Eval results match current code | fingerprint of instructions, test set, sources.csv and server code must match | match |
+
+The eval itself runs on a workstation, because it signs in as two real test users; CI checks the committed eval/results/summary.json.
+
+**GitHub to Azure sign-in (OIDC, no stored passwords)**
+
+1. App registration iea-github-deploy with Contributor on rg-iea-dev.
+2. Role Based Access Control Administrator on rg-iea-dev with a condition that allows assigning only AcrPull, Search Index Data Reader and Cognitive Services OpenAI User (needed for Bicep what-if).
+3. Federated credentials whose subject includes the owner and repository IDs, as GitHub now sends them: repo:wisishtech@154911146/ai-impact-assistance@1466938759:ref:refs/heads/main, and the same with :pull\_request.
+4. Repository variables (not secrets): AZURE\_CLIENT\_ID, AZURE\_TENANT\_ID, AZURE\_SUBSCRIPTION\_ID.
+
+**Release a new server version**
+
+1. Change code; run uv run --env-file .env pytest -q.
+2. If instructions, test set, sources or server code changed, run uv run python eval/run\_eval.py and commit eval/results/summary.json.
+3. Push to main and wait for CI to pass.
+4. GitHub, Actions, Release MCP server, Run workflow, enter the version (for example 0.1.5).
+5. Check the run ends with healthy; otherwise the workflow has already rolled back.
+
+**Still planned**
+
+- [ ] Test and production environments (resource groups, Power Platform environments, GitHub environments with approvals), created from infra/main.bicep
+- [ ] Pipeline for the Copilot Studio solution (pac solution import into test and production)
+- [ ] Pilot with 4 to 6 staff and a go / revise / stop decision
+- [ ] Azure Monitor alerts and a workbook dashboard
+- [ ] Scheduled weekly eval
+
 ## Release path
 
 &#91;embedded content: release path · 4 stages, 3 gates\]
@@ -9,6 +69,8 @@ This document takes the working build from the blueprint to a production service
 Every release follows this path; any stage can roll back to the previous good release in under 15 minutes (see Operations runbook), and the full gate checklists are under Release gates.
 
 ## Environments: what they are and where they run
+
+**Status:** only dev exists: Azure rg-iea-dev (East US), Power Platform IEA-Sandbox (Sandbox, pay-as-you-go; the Developer environment ran out of credits and cannot use pay-as-you-go). Test and production are still to be created with the commands below.
 
 An "environment" is a complete, separate copy of the system: its own Azure resources, its own Copilot Studio agent, its own app registrations and its own data. You run three so that experiments in dev can never break what pilot users or production users rely on.
 
@@ -58,6 +120,8 @@ bash scripts/setup_entra.sh prod
 **Rules.** Nothing in test or production is changed by hand; every change goes through a pull request and the pipeline. Each environment has its own app registrations and secrets, so a dev credential can never reach production data.
 
 ## Infrastructure as code
+
+**As built:** azd was not used. infra/main.bicep defines every Azure resource for one environment (Search, AI, storage, registry, Key Vault, Log Analytics, App Insights, Container Apps, Static Web Apps, 3 role assignments), with infra/dev.bicepparam holding dev's existing names. It is checked by az bicep build in CI and compared with dev by the Infra what-if workflow. Bicep role-assignment names differ from those the CLI created in dev, so use it to create new environments, not to redeploy over dev.
 
 The Azure CLI script in the blueprint is replaced here by Bicep templates, so test and production are created from the same files and any environment can be rebuilt in minutes. The Azure Developer CLI (`azd`) runs them.
 
@@ -189,6 +253,8 @@ az deployment sub what-if --location eastus2 --template-file infra/main.bicep \
 ```
 
 ## CI/CD pipelines
+
+**As built:** the workflows in use are ci.yml, release-server.yml, portal.yml and infra-whatif.yml (see As built at the top). The federated credential subject must include owner and repository IDs; the name-only subject in the commands below fails with AADSTS700213. Variables go in the Variables tab, not Secrets. agent.yml is not built yet.
 
 GitHub Actions builds, tests, evaluates and deploys everything; you never deploy to test or production from a laptop. Three things ship (the MCP server, the search index, the Copilot Studio agent), and all of them pass the same evaluation gate.
 
@@ -333,6 +399,8 @@ jobs:
 
 ## Release gates
 
+**As built:** Gate 1 is automated (eval/check\_thresholds.py and eval/check\_fresh.py in CI and in the release workflow; thresholds in the As built table at the top). Gates 2 and 3 need the test environment and the pilot, which are not built yet.
+
 A release moves forward only when every item for its stage is ticked; any unticked item is a no-go.
 
 **Gate 1 — Dev to test**
@@ -362,6 +430,8 @@ A release moves forward only when every item for its stage is ticked; any untick
 - [ ] Go decision recorded in `docs/decisions/` with who approved it
 
 ## Pilot plan
+
+**Status:** not started. End-to-end tests so far used three test accounts (program.officer, restricted.reviewer, admin) in Teams, Microsoft 365 Copilot, the portal and the command-line agent.
 
 A short pilot with 10–15 real users, run in the test environment, decides go, revise or stop, using measures agreed before it starts. It ends when the measures below have enough data, not on a fixed date.
 
@@ -393,6 +463,8 @@ For the portfolio version, run the same pilot with 5–8 volunteer peers as gues
 
 ## Monitoring and alerts
 
+**As built:** tool calls are traced to App Insights appi-iea-dev. Usage queries (calls per day, users per week, searches with no results) are in docs/sustained-use.md. Alerts, the dashboard and the scheduled eval are not set up yet.
+
 The MCP server sends OpenTelemetry traces to Application Insights (`azure-monitor-opentelemetry`), so every tool call, its latency and its outcome can be queried and alerted on.
 
 **What each tool call logs.** Hashed user ID, tool name, filters used, number of hits, top document IDs, latency, token counts, error code. Never the full question, answer or document text.
@@ -414,6 +486,8 @@ The MCP server sends OpenTelemetry traces to Application Insights (`azure-monito
 **Scheduled evaluation.** A GitHub Actions cron job runs the 50-question test set against production every Monday and posts the scores, so quality drift is caught even when nobody complains.
 
 ## Operations runbook
+
+**As built:** docs/runbook.md is written from the live system (health check, release, rollback, kill switch with MAINTENANCE\_MODE, access, secret rotation, known issues). docs/operations-log.md records each release and fix.
 
 The runbook (`docs/runbook.md`) lets someone other than the builder keep the assistant running; each procedure below has numbered steps there.
 
@@ -448,6 +522,8 @@ The runbook (`docs/runbook.md`) lets someone other than the builder keep the ass
 - After any model or prompt change: full evaluation before release
 
 ## Cost management
+
+**As built:** a $50 budget alert covers rg-iea-dev. Copilot Studio usage is billed to Azure through the IEADevelopment billing plan. The container app runs one replica (min 1, max 3) in single-revision mode, after old active revisions were found each keeping a paid replica running. The cost sheet is not written yet.
 
 Cost is tracked per environment from day one, and the cost sheet turns real pilot usage into a monthly forecast before anyone approves production.
 
@@ -485,6 +561,8 @@ No release reaches production without named owners, and the assistant has writte
 **Retirement.** Retire or redesign the assistant if any of these holds for two consecutive months: usage below 30% of the target group, helpful rating below 60%, a repeated leak or serious incident, or a cheaper approach that meets the need. Retirement steps: announce 30 days ahead, unpublish the agent, export logs and the final evaluation, delete the index and app registrations, archive the repo with a closing note.
 
 ## Versioning and release notes
+
+**As built:** server images are versioned 0.1.0 to 0.1.4 (0.1.3: readable citations and multi-origin CORS; 0.1.4: first release through GitHub Actions). Revision names follow the version, for example v0-1-4-1.
 
 One version number covers the server image, index version and agent solution together, so any release can be traced and rebuilt.
 
