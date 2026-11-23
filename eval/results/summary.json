@@ -1,0 +1,12 @@
+{
+  "run_at": "2026-11-23 12:21:45",
+  "questions": 49,
+  "hit_at_5": 1.0,
+  "mrr": 0.987,
+  "leaked_questions": 0,
+  "restricted_hit_rate": 1.0,
+  "groundedness_avg": 5,
+  "correctness": 0.974,
+  "false_refusals": 1,
+  "refusal_rate_unanswerable": 0.9
+}
