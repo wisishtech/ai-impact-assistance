@@ -1,0 +1,8 @@
+.env
+.env.*
+.venv
+data/
+eval/results/
+.git/
+**/__pycache__/
+portal/node_modules/
