@@ -1,0 +1,29 @@
+{
+  "name": "iea-portal",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "esbuild src/index.tsx --bundle --platform=browser --target=es2022 --outdir=public/dist --jsx=automatic --minify",
+    "start": "esbuild src/index.tsx --bundle --platform=browser --target=es2022 --outdir=public/dist --jsx=automatic --watch=forever --serve=localhost:5173 --servedir=./public",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@azure/msal-browser": "4.13.1",
+    "@microsoft/agents-activity": "1.10.2",
+    "@microsoft/agents-copilotstudio-client": "1.10.2",
+    "botframework-webchat": "4.19.2",
+    "botframework-webchat-fluent-theme": "4.19.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.6.0"
+  }
+}

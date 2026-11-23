@@ -1,8 +1,11 @@
 .env
 .env.*
 .venv
-data/
-eval/results/
 .git/
+.pytest_cache/
 **/__pycache__/
-portal/node_modules/
+data/
+eval/
+portal/
+agent/
+docs/

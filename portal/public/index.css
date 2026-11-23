@@ -1,0 +1,25 @@
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body { font-family: "Segoe UI", system-ui, sans-serif; color: #1f2328; background: #f6f7f9; }
+.app { display: flex; flex-direction: column; height: 100%; }
+header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #fff; border-bottom: 1px solid #e3e5e8; }
+header h1 { font-size: 18px; margin: 0; }
+.user { display: flex; gap: 12px; align-items: center; font-size: 14px; }
+main { flex: 1; display: flex; min-height: 0; }
+.chat { flex: 2; min-width: 0; background: #fff; border-right: 1px solid #e3e5e8; }
+.drafts { flex: 1; max-width: 380px; padding: 16px; overflow-y: auto; }
+.drafts-head { display: flex; justify-content: space-between; align-items: center; }
+.drafts h2 { font-size: 16px; margin: 0; }
+.drafts ul { list-style: none; padding: 0; margin: 12px 0 0; }
+.drafts li { background: #fff; border: 1px solid #e3e5e8; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+.row { display: flex; justify-content: space-between; gap: 8px; }
+.badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+.badge.ok { background: #dcf5e3; color: #146c2e; }
+.badge.warn { background: #fff1d6; color: #8a5300; }
+.badge.muted { background: #eceef1; color: #57606a; }
+.comment { font-size: 13px; margin: 6px 0 0; }
+.muted { color: #57606a; }
+.small { font-size: 12px; margin: 4px 0 0; }
+.error { color: #b42318; font-size: 13px; padding: 12px; }
+button { font: inherit; font-size: 13px; padding: 4px 12px; border: 1px solid #c9ccd1; border-radius: 6px; background: #fff; cursor: pointer; }
+button:disabled { opacity: .5; cursor: default; }
