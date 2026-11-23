@@ -8,7 +8,7 @@ dependencies = [
     "azure-search-documents>=12.1.0",
     "azure-storage-blob>=12.31.1",
     "httpx>=0.28.1",
-    "mcp>=2.3.0",
+    "mcp<2",
     "msgraph-sdk>=1.65.0",
     "openai>=3.57.0",
     "pydantic-settings>=2.16.3",
