@@ -89,6 +89,50 @@ The build is live and passes every release gate; 18 changes from the plan below 
 
 **Live now:** server 0.1.4 on Container Apps, portal at https://white-dune-0fcfdb00f.6.azurestaticapps.net, agent in Teams and Microsoft 365 Copilot, repository wisishtech/ai-impact-assistance.
 
+## Using the agent: example questions and what to expect
+
+Staff can ask about evidence, look up indicators, or have a progress section drafted and sent for review; every example below was run on the live system.
+
+**Where to open it**
+
+| Channel | How |
+| --- | --- |
+| Microsoft Teams | Install link: https://teams.microsoft.com/l/app/?titleId=T\_5bc2b2b5-05ac-1fe1-89b3-1bf993190374, then Add |
+| Microsoft 365 Copilot | m365.cloud.microsoft/chat, then Agents, then Impact Evidence Assistant |
+| Web portal | https://white-dune-0fcfdb00f.6.azurestaticapps.net (sign in with a work account) |
+| Command line (code-first agent) | cd agent\_code, then uv run python iea\_agent.py --user \<your account> |
+
+First use only: each person creates their own IEA Server connection once, from the user-connections link the agent shows (or the one in the runbook).
+
+**Example questions**
+
+| Ask | What happens |
+| --- | --- |
+| What did the Mandela Washington Fellowship project page say about the program? | All-staff user: says the project page is not in the documents they can access, then answers from public reports with Title, page, URL citations. Reviewer in IEA-Restricted: answers from the project page itself. |
+| How many secondary STEM teachers are involved in Georgia's teacher professional development program supported by IREX? | A short answer with the figure and its citation. |
+| How many learners in Jordan were reached through IREX's strengthened instruction and materials in 2025? | A figure from the 2025 Annual Report, cited by page. |
+| Which organizations partnered with IREX to implement the Tafakkar project in Jordan? | The partner names with a citation. |
+| List the results-framework indicators for AI for Education. | A table: AI-1, Education leaders trained on AI governance, FY26, baseline 0, target 150, read from the SharePoint list. |
+| Draft the AI for Education progress section for indicator AI-1. | A cited paragraph. With no results in the documents it says "No evidence found of results against the target of 150" and names the data needed. It ends by asking you to confirm. |
+| Draft the Leadership progress section for indicator LD-1. | Same drafting pattern for the Leadership program. |
+| What was IREX's total budget for 2030? | Says the documents do not contain this. No number, no citation. |
+| Write me a poem about leadership. | "I can only help with IREX program evidence, indicators and progress drafts." |
+
+**Drafting and review, step by step**
+
+1. Ask for a draft for one indicator, as above.
+2. Read it; ask for changes in plain words if needed ("shorter", "leave out the second sentence").
+3. Reply "Yes, submit it." The agent submits exactly the text you confirmed and gives you the review item number and status Pending. In the command-line agent you must also type y.
+4. The reviewer gets the request in Teams, Approvals, and approves or rejects with a comment.
+5. You get a Teams message from Workflows with the decision, the reviewer's name and email, the comment and the time (ET), and the portal's My drafts panel shows Approved or Changes requested.
+
+**Tips for good answers**
+
+- Name the program, country or year; the search works best with specific words.
+- Ask one thing at a time; for several indicators, draft them one by one.
+- If the answer says the documents do not contain something, the gap is real: the agent will not guess.
+- Check the cited page before using a figure in donor reporting.
+
 ## Where people use it
 
 One agent is built once in Copilot Studio and published to several channels; every channel talks to the same agent, tools and permissions.
@@ -192,6 +236,168 @@ Every tool in the project, grouped by layer, with the specific job it does here.
 | Bot Framework Web Chat (`botframework-webchat`) | Chat control that talks to the Copilot Studio agent over Direct Line |
 | Vitest + Testing Library | Front-end unit tests |
 | Azure Static Web Apps | Hosts the portal |
+
+### Websites and tools actually used (as built)
+
+The tables above were the plan. These three lists are what the finished build used; the line after them names planned tools that were not needed.
+
+**Websites**
+
+| Website | Used for |
+| --- | --- |
+| admin.microsoft.com | Microsoft 365 Business Standard trial, test users and licences |
+| portal.azure.com | Azure resources, budget alerts, Application Insights logs |
+| admin.powerplatform.microsoft.com | Environments (IEA-Sandbox), pay-as-you-go billing plan, Dataverse team for IEA-AllStaff |
+| make.powerapps.com | Solution, custom connector sharing |
+| make.powerautomate.com | IEA Draft Approval flow, run history |
+| copilotstudio.microsoft.com | Agent, instructions, IEA Server tool, channels, user connections |
+| wisishtech.sharepoint.com/sites/iea-knowledge | All Staff and Restricted libraries, Results Framework and Draft Reviews lists |
+| teams.cloud.microsoft | Using the agent, Approvals, Workflows notices |
+| m365.cloud.microsoft/chat | Using the agent in Microsoft 365 Copilot |
+| github.com/wisishtech/ai-impact-assistance | Code, Actions runs, repository variables and secrets |
+| white-dune-0fcfdb00f.6.azurestaticapps.net | The hosted portal |
+| ca-iea-mcp-dev.jollyhill-fc3ac0bc.eastus.azurecontainerapps.io | The MCP server (/mcp, /healthz, /api/my-drafts) |
+| irex.org | Source documents |
+| learn.microsoft.com | Current setup steps and API references |
+
+**Command-line and developer tools**
+
+| Tool | Used for |
+| --- | --- |
+| PowerShell 7 and Git Bash | Running all commands (Git Bash with MSYS\_NO\_PATHCONV=1) |
+| Azure CLI with the containerapp extension | Resources, Entra apps and groups, role assignments, ACR builds, container app updates |
+| Bicep CLI | Compiling infra/main.bicep |
+| Power Platform CLI (pac) | Solution export and unpack |
+| PnP PowerShell | SharePoint site, libraries, lists and permissions |
+| uv and Python 3.14 (local), Python 3.12 (container image) | Python projects, dependencies, tests, scripts |
+| Node.js 22, npm, esbuild | Building and running the portal |
+| Git and GitHub Actions | Source control, CI, server release, portal deploy, infra what-if |
+| Azure Container Registry Tasks (az acr build) | Building the server image in the cloud (local Docker could not run) |
+| VS Code-based editor | Editing code and docs |
+| curl | Health checks and CORS checks |
+
+**Libraries**
+
+| Library | Used for |
+| --- | --- |
+| mcp 1.30 (server) and 2.x (Agent Framework client) | MCP server and client |
+| httpx | Azure AI Search REST and Microsoft Graph calls |
+| azure-identity | Managed identity and developer sign-in |
+| openai | Embeddings, eval answers and judge |
+| pymupdf | PDF text and page numbers |
+| pydantic-settings | Server configuration |
+| PyJWT | Entra token validation |
+| starlette, uvicorn | Web routes and server |
+| azure-monitor-opentelemetry | Traces to Application Insights |
+| msal (Python) | Test-user sign-in for the eval and the code-first agent |
+| python-dotenv, pytest | Settings and tests |
+| agent-framework-core, agent-framework-openai, tenacity | Code-first agent |
+| @azure/msal-browser | Portal sign-in |
+| @microsoft/agents-copilotstudio-client 1.10.2 | Portal connection to the Copilot Studio agent |
+| botframework-webchat, botframework-webchat-fluent-theme, React, TypeScript | Portal chat interface |
+| GitHub Actions: checkout, setup-node, setup-python, setup-uv, azure/login, static-web-apps-deploy | Workflows |
+
+Planned but not used: azd, local Docker, MCP Inspector (scripts/mcp\_smoke.py was used instead), Vite, Vitest, @azure/msal-react, Direct Line, azure-search-documents and msgraph-sdk (plain REST calls with httpx instead). The Static Web Apps CLI was tried and replaced by GitHub Actions.
+
+### Key commands used (as built)
+
+The commands that built and run the live system, grouped by job. PowerShell unless marked; run from the project root.
+
+**Sign in**
+
+```powershell
+az login --tenant cd379f63-f29d-4b01-869f-552fe56bbc29
+az account set --subscription 11ccf494-82c8-4efc-ae27-7a88568639fc
+# Git Bash only: stop it rewriting /paths in az arguments
+export MSYS_NO_PATHCONV=1
+```
+
+**Documents and search index**
+
+```powershell
+uv run python ingestion/build_chunks.py       # PDFs to page-aware chunks
+uv run python ingestion/create_index.py       # index schema via REST
+uv run python ingestion/embed_and_upload.py   # embeddings + upload, with group_ids
+```
+
+**Tests and evaluation**
+
+```powershell
+uv add "mcp<2"                                  # pin the server SDK
+uv run --env-file .env pytest -q               # 24 tests incl. permission integration
+uv run python eval/generate_testset.py
+uv run python eval/run_eval.py                 # signs in as two test users
+uv run python eval/check_fresh.py
+uv run python eval/check_thresholds.py
+```
+
+**Build and release the server by hand** (the GitHub workflow now does this)
+
+```powershell
+# build from a minimal folder so packing does not walk node_modules
+$B = "$env:TEMP\iea-build"
+Remove-Item -Recurse -Force $B -ErrorAction SilentlyContinue
+New-Item -ItemType Directory $B | Out-Null
+Copy-Item pyproject.toml, uv.lock $B
+Copy-Item -Recurse mcp_server "$B\mcp_server"
+az acr build -r acrieadev9498 -t iea-mcp:0.1.3 -f mcp_server/Dockerfile $B
+
+az containerapp update -n ca-iea-mcp-dev -g rg-iea-dev --image acrieadev9498.azurecr.io/iea-mcp:0.1.3 --revision-suffix v013-1424 --set-env-vars "PORTAL_ORIGIN=http://localhost:5173,https://white-dune-0fcfdb00f.6.azurestaticapps.net"
+az containerapp revision set-mode -n ca-iea-mcp-dev -g rg-iea-dev --mode single
+az containerapp update -n ca-iea-mcp-dev -g rg-iea-dev --min-replicas 1
+
+# checks
+curl.exe https://ca-iea-mcp-dev.jollyhill-fc3ac0bc.eastus.azurecontainerapps.io/healthz
+curl.exe -i -X OPTIONS https://ca-iea-mcp-dev.jollyhill-fc3ac0bc.eastus.azurecontainerapps.io/api/my-drafts -H "Origin: https://white-dune-0fcfdb00f.6.azurestaticapps.net" -H "Access-Control-Request-Method: GET"
+```
+
+**Entra app registrations for the portal and the eval**
+
+```powershell
+$PPAPI = "8578e004-a5c6-46e7-913e-12f58912df43"   # Power Platform API
+$SCOPE_ID = az ad sp show --id $PPAPI --query "oauth2PermissionScopes[?value=='CopilotStudio.Copilots.Invoke'].id" -o tsv
+$WEB_APP = az ad app create --display-name iea-webchat --sign-in-audience AzureADMyOrg --query appId -o tsv
+'{"spa":{"redirectUris":["http://localhost:5173"]}}' | Set-Content -Encoding ascii spa.json
+az rest --method PATCH --uri "https://graph.microsoft.com/v1.0/applications/$(az ad app show --id $WEB_APP --query id -o tsv)" --headers "Content-Type=application/json" --body "@spa.json"
+az ad app permission add --id $WEB_APP --api $PPAPI --api-permissions "$SCOPE_ID=Scope"
+az ad app permission admin-consent --id $WEB_APP
+
+az ad app create --display-name iea-eval --sign-in-audience AzureADMyOrg --is-fallback-public-client true --public-client-redirect-uris "http://localhost"
+```
+
+**Portal**
+
+```powershell
+cd portal; npm install; npm start              # http://localhost:5173 (not 127.0.0.1)
+npm run build
+az staticwebapp create -n swa-iea-dev -g rg-iea-dev -l eastus2 --sku Free
+az staticwebapp secrets list -n swa-iea-dev -g rg-iea-dev --query "properties.apiKey" -o tsv | Set-Clipboard   # GitHub secret
+```
+
+**Power Platform solution to Git**
+
+```powershell
+pac solution export --name ImpactEvidenceAssistant --path agent/solution.zip --overwrite
+pac solution unpack --zipfile agent/solution.zip --folder agent/solution --allowDelete
+```
+
+**GitHub to Azure (OIDC)**
+
+```powershell
+$GH_APP = az ad app create --display-name iea-github-deploy --query appId -o tsv
+az ad sp create --id $GH_APP
+# subject must include owner and repo IDs, exactly as azure/login prints it
+'{"name":"main-ids","issuer":"https://token.actions.githubusercontent.com","subject":"repo:wisishtech@154911146/ai-impact-assistance@1466938759:ref:refs/heads/main","audiences":["api://AzureADTokenExchange"]}' | Set-Content -Encoding ascii fc.json
+az ad app federated-credential create --id $GH_APP --parameters "@fc.json"
+az role assignment create --assignee $GH_APP --role Contributor --scope (az group show -n rg-iea-dev --query id -o tsv)
+```
+
+**Code-first agent**
+
+```powershell
+cd agent_code; uv sync
+uv run python iea_agent.py --user program.officer@WisishTech.onmicrosoft.com
+```
 
 ## Where everything is hosted
 
@@ -1145,7 +1351,7 @@ Drafting a progress section
 5. Only after the user confirms, call submit_draft_for_review once per indicator.
 ```
 
-**6. Starter prompts** (Overview → Suggested prompts): "What outcomes did the Leaders program report in Kenya?", "Find impact stories about women entrepreneurs", "Draft the FY26 progress section for the Leaders program".
+**6. Starter prompts** (Overview, Suggested prompts). As built: "What did the Mandela Washington Fellowship project page say about the program?", "List the results-framework indicators for AI for Education.", "Draft the AI for Education progress section for indicator AI-1." More examples are in Using the agent near the top.
 
 **7. Test and publish**
 
@@ -1736,6 +1942,43 @@ The problems most likely to stop the build, with the first thing to check.
 | Web page shows a sign-in card instead of SSO | Token exchange URL not set or scope mismatch | Token exchange URL must equal `api://<iea-agent-auth>/Agent.Access`; republish |
 | Graph returns 403 on lists | `Sites.Selected` granted but site permission missing | Run `Grant-PnPAzureADAppSitePermission` for the managed identity's app ID |
 | `az cognitiveservices ... deployment create` fails | Model or version not offered in the region | `az cognitiveservices model list -l <region> -o table`; pick an available one |
+
+### Fixes during the build (as built)
+
+Every problem below happened while building the live system; the fix is what worked.
+
+| Problem | Cause | Fix |
+| --- | --- | --- |
+| Azure deployment failed in East US 2 | No capacity in the region | Moved everything to East US |
+| az commands failed in Git Bash with odd paths | Git Bash rewrites arguments that start with / | export MSYS\_NO\_PATHCONV=1 |
+| Bash commands failed in PowerShell ("Missing expression after unary operator") | Bash line continuations and syntax | Used PowerShell versions; JSON bodies written to a temp file |
+| AADSTS50076 on az commands | MFA required for the tenant | az logout, then az login --tenant |
+| Forbidden when uploading chunks | Missing Search Index Data Contributor role | Assigned the role to the admin account |
+| SearchIndex.from\_dict not found | SDK method not available | Created the index with a REST PUT |
+| FastMCP import error | Unpinned mcp installed 2.x, which renamed FastMCP | uv add "mcp<2" |
+| 421 Misdirected Request from the server | MCP DNS-rebinding protection rejected the Container Apps host | allowed\_hosts from ALLOWED\_HOSTS; release 0.1.1 |
+| "Couldn't load this tool's contract" in Copilot Studio | Server scaled to zero and started too slowly | min-replicas 1 |
+| Copilot Studio ran out of credits | Developer environment, no pay-as-you-go | New Sandbox environment IEA-Sandbox with a billing plan |
+| No "Authenticate manually" option | New Copilot Studio UI | Kept Authenticate with Microsoft; website via the Agents SDK |
+| Tool name "Impact Evidence" rejected | Name already used | Named it IEA Server; added the new redirect URI |
+| Solution export failed | A connection reference outside the solution | Removed it; added --overwrite for repeat exports |
+| "Connector information unavailable" for a shared user | Connector not shared | Shared the IEA Server connector with IEA-AllStaff |
+| "The AAD group does not exist in Dataverse" | Group not known to Dataverse | Created a Dataverse team of type Entra ID security group, Basic User role |
+| Restricted user saw "no permission" in Copilot Studio | End users are not makers | Use Teams, Copilot or the portal, not the maker site |
+| AADSTS50011 in the portal | Opened at 127.0.0.1, registered for localhost | Use http://localhost:5173 |
+| "Doesn't support agents built with the GitHub Copilot harness" | Agents SDK client 1.9.1 | Upgraded to 1.10.2 |
+| Citation chips showed raw JSON | Tool returned a list of dicts | Readable CallToolResult text plus structured content; release 0.1.3 |
+| ACR build: pyproject.toml not found | Build ran with mcp\_server as the context | Build from the root with -f mcp\_server/Dockerfile |
+| ACR build hung while packing | Walking portal/node\_modules | Build from a minimal temporary folder |
+| Portal "Failed to fetch" on My drafts | PORTAL\_ORIGIN set with an empty variable | Set the origin with the URL typed in |
+| 8 active revisions | Multiple-revision mode kept old ones running | Single-revision mode; deactivated the rest |
+| SWA CLI deploy failed on Windows | Deployment binary crashed (ECONNRESET, exit code 1) | Deploy portal workflow in GitHub Actions |
+| GitHub login: client-id and tenant-id missing | Values added as Secrets, workflow reads Variables | Added them under Variables |
+| AADSTS700213 from GitHub | Subject now includes owner and repo IDs | Federated credential with the exact subject printed by azure/login |
+| What-if: no permission to write role assignments | Contributor cannot assign roles | Role Based Access Control Administrator limited to 3 roles |
+| Test environment failed | 1 Container Apps environment per region per subscription | Kept dev only; test and prod documented as next steps |
+| Agent wrote a poem; code-first agent overclaimed | Instructions did not forbid it | Scope rule and strict drafting rules; eval back to 1.0 |
+| Teams notice said "draftAI" and dumped raw text; Reviewer blank | Missing space; Response summary chip; wrong field name | Typed spaces; responder/displayName and responder/email; comments; time in ET |
 
 ## Sources
 
